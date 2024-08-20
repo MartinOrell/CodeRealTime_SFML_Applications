@@ -1,0 +1,16 @@
+let tc = TCF.define(TCF.CPP_TRANSFORM);
+tc.topCapsule = 'Hello'
+tc.userLibraries = [
+    "../../gui/build/libgui.a",
+    "../../gui/build/_deps/sfml-build/lib/libsfml-audio.a",
+    "../../gui/build/_deps/sfml-build/lib/libsfml-graphics.a",
+    "../../gui/build/_deps/sfml-build/lib/libsfml-main.a",
+    "../../gui/build/_deps/sfml-build/lib/libsfml-network.a",
+    "../../gui/build/_deps/sfml-build/lib/libsfml-system.a",
+    "../../gui/build/_deps/sfml-build/lib/libsfml-window.a"
+];
+tc.inclusionPaths = [
+    "../../gui/include",
+    "../../gui/build/_deps/sfml-src/include"
+]
+tc.compileArguments = "-DSFML_STATIC"

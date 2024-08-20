@@ -1,0 +1,37 @@
+capsule Hello{
+
+    [[rt::header_preface]]
+    `
+        #include <iostream>
+        #include "gui.h"
+    `
+
+    [[rt::decl]]
+    `
+        RTTimerId updateTimerId;
+        Gui gui;
+    `
+
+    behavior port updateTimer : Timing;
+
+    statemachine{
+        initial->Running;
+        state Running{
+            entry
+            `
+                updateTimerId = updateTimer.informEvery(RTTimespec(0,1000000000/60));
+            `;
+            exit
+            `
+                updateTimer.cancelTimer(updateTimerId);
+            `;
+            update: on updateTimer.timeout
+            `
+                if(!gui.update()){
+                    updateTimer.cancelTimer(updateTimerId);
+                    context()->abort();
+                }
+            `;
+        };
+    };
+};
