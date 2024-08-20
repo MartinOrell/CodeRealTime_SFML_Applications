@@ -11,7 +11,11 @@ cmake --build build/
 After the gui library is built, then you can compile the project as normal with the .tcjs file.
 ### add dll to executable
 
-Before you can run, the dll files from SFML needs to be added to the same folder as the executable. The files are found in helloSFML/gui/build/bin. The files should go to helloSFML/HelloSFML_target/default
+Before you can run the application, the dll files from SFML needs to be added to the same folder as the executable. On windows this can be done with the command:
+```
+robocopy ../gui/build/bin ../HelloWorld_target/default
+```
+(assuming called from the folder containing the art files)
 
 Then the program should be able to be run.
 
