@@ -1,0 +1,56 @@
+capsule Main{
+
+    [[rt::header_preface]]
+    `
+        #include <iostream>
+        #include "gui.h"
+    `
+
+    [[rt::decl]]
+    `
+        public:
+            Main(RTController*, RTActorRef*, int);
+        private:
+            int _fps;
+            RTTimerId updateTimerId;
+            Gui gui;
+            Gui::Event lastEvent;
+    `
+
+    [[rt::impl]]
+    `
+        Main::Main(RTController* rtg_rts, RTActorRef* rtg_ref, int fps)
+        : RTActor(rtg_rts, rtg_ref)
+        , _fps(fps){}
+    `
+
+    service behavior port dicePort~: Protocol;
+
+    behavior port updateTimer : Timing;
+
+    statemachine{
+        state Running, End;
+        initial->Running
+        `
+            updateTimerId = updateTimer.informEvery(RTTimespec(0,1000000000/_fps));
+        `;
+        choice decideNextState;
+        update: Running->decideNextState on updateTimer.timeout
+        `
+            lastEvent = gui.update();
+        `;
+        decideNextState->End when `lastEvent == Gui::Event::End`
+        `
+            updateTimer.cancelTimer(updateTimerId);
+            context()->abort();
+        `;
+        decideNextState->Running when `lastEvent == Gui::DiceRoll`
+        `
+            RTMessage replyMsg;
+            dicePort.requestDiceValue().invoke(&replyMsg);
+            int diceRoll = *static_cast<int*>(replyMsg.getData());
+            gui.setDiceValue(diceRoll);
+        `;
+        decideNextState->Running when `else`;
+    };
+};

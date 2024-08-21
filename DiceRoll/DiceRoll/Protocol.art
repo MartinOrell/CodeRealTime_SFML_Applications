@@ -1,0 +1,4 @@
+protocol Protocol{
+    in requestDiceValue();
+    out respondDiceValue(`int`);
+};

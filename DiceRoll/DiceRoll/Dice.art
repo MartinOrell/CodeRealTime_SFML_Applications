@@ -1,0 +1,49 @@
+capsule Dice{
+
+    [[rt::decl]]
+    `
+        public:
+            Dice(RTController*, RTActorRef*, int, int, int);
+        private:
+            RTTimerId incTimerId;
+            int _rollSpeed;
+            int _value;
+            int _minValue;
+            int _maxValue;
+    `
+
+    [[rt::impl]]
+    `
+        Dice::Dice(RTController* rtg_rts, RTActorRef* rtg_ref, int rollSpeed, int minValue, int maxValue)
+        : RTActor(rtg_rts, rtg_ref)
+        , _rollSpeed(rollSpeed)
+        , _value(minValue)
+        , _minValue(minValue)
+        , _maxValue(maxValue){}
+    `
+
+    service behavior port mainPort: Protocol;
+
+    behavior port incTimer : Timing;
+
+    statemachine{
+        initial->Running;
+        state Running{
+            entry
+            `
+                incTimerId = incTimer.informEvery(RTTimespec(0,1000000000/_rollSpeed));
+            `;
+            inc: on incTimer.timeout
+            `
+                _value+=incTimerId.timeouts();
+                if(_value > _maxValue){
+                    _value = _minValue;
+                }
+            `;
+            request: on mainPort.requestDiceValue
+            `
+                mainPort.respondDiceValue(_value).reply();
+            `;
+        };
+    };
+};
