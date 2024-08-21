@@ -8,8 +8,19 @@ capsule Hello{
 
     [[rt::decl]]
     `
-        RTTimerId updateTimerId;
-        Gui gui;
+        public:
+            Hello(RTController*, RTActorRef*);
+        private:
+            int _fps;
+            RTTimerId _updateTimerId;
+            Gui _gui;
+    `
+
+    [[rt::impl]]
+    `
+        Hello::Hello(RTController* rtg_rts, RTActorRef* rtg_ref)
+        : RTActor(rtg_rts, rtg_ref)
+        , _fps(60){}
     `
 
     behavior port updateTimer : Timing;
@@ -19,16 +30,12 @@ capsule Hello{
         state Running{
             entry
             `
-                updateTimerId = updateTimer.informEvery(RTTimespec(0,1000000000/60));
-            `;
-            exit
-            `
-                updateTimer.cancelTimer(updateTimerId);
+                _updateTimerId = updateTimer.informEvery(RTTimespec(0,1000000000/_fps));
             `;
             update: on updateTimer.timeout
             `
-                if(!gui.update()){
-                    updateTimer.cancelTimer(updateTimerId);
+                if(!_gui.update()){
+                    updateTimer.cancelTimer(_updateTimerId);
                     context()->abort();
                 }
             `;
