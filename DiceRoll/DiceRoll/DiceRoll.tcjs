@@ -13,4 +13,3 @@ tc.inclusionPaths = [
     "../../gui/include",
     "../../gui/build/_deps/sfml-src/include"
 ]
-tc.compileArguments = "-DSFML_STATIC"
