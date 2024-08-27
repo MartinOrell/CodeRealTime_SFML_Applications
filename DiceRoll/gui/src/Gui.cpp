@@ -3,7 +3,7 @@
 Gui::Gui()
 : _window{ { 800u, 500u }, "Dice Roller" }
 {
-    _font.loadFromFile("../../res/fonts/arial.ttf");
+    _font.loadFromFile("res/fonts/arial.ttf");
     float instructionYPos = 150.f;
     float diceSize = 50.f;
 

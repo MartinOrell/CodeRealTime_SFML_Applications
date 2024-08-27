@@ -13,3 +13,4 @@ tc.inclusionPaths = [
     "../../gui/include",
     "../../gui/build/_deps/sfml-src/include"
 ]
+tc.makeCommand = 'cp -R -Force ../../gui/build/bin/*  .; make; cp -R -Force ../../res .'
