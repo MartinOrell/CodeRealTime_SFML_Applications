@@ -3,7 +3,7 @@
 Gui::Gui()
 : _window{ { 800u, 500u }, "Hello World!" }
 {
-    _font.loadFromFile("../../res/fonts/arial.ttf");
+    _font.loadFromFile("res/fonts/arial.ttf");
 
     _helloText.setFont(_font);
     _helloText.setString("Hello World!");

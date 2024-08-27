@@ -9,17 +9,9 @@ cmake --build build/
 ```
 ### building project
 After the gui library is built, then you can compile the project as normal with the .tcjs file.
-### add dll to executable
-
-Before you can run the application, the dll files from SFML needs to be added to the same folder as the executable. On windows this can be done with the command:
-```
-robocopy ../gui/build/bin ../HelloWorld_target/default
-```
-(assuming called from the folder containing the art files)
-
-Then the program should be able to be run.
 
 ### misc
+#### including libraries
 This is the content inside the .tcjs file specifically used to be able to run SFML.
 
 ```
@@ -36,5 +28,10 @@ tc.inclusionPaths = [
     "../../gui/include",
     "../../gui/build/_deps/sfml-src/include"
 ]
-tc.compileArguments = "-DSFML_STATIC"
+```
+
+#### Copying files to target
+In order for SFML to work some dll files needs to be in the same folder as the executable. These files can be found at gui/build/bin. Those files are copied automatically when building. The same is true for the res folder which contains the font for the print. The copy instruction is defined in the TC
+```
+tc.makeCommand = 'cp -R -Force ../../gui/build/bin/*  .; make; cp -R -Force ../../res .';
 ```

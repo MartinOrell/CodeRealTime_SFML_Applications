@@ -2,7 +2,6 @@ capsule Hello{
 
     [[rt::header_preface]]
     `
-        #include <iostream>
         #include "gui.h"
     `
 
