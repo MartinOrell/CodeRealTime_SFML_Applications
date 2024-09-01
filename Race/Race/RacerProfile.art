@@ -1,7 +1,6 @@
 [[rt::decl]]
 `
     #include <iostream>
-    #include "config/RacerProfileMacros.h"
     #include "Animal.h"
 
     struct RacerProfile{
@@ -21,20 +20,20 @@
         RacerProfile profile;
         switch(animal){
             case TORTOISE:
-                profile.name = TORTOISENAME;
-                profile.filename = TORTOISEASCIIFILENAME;
-                profile.speed = TORTOISESPEED;
-                profile.stamina = TORTOISESTAMINA;
-                profile.reactionTime = RTTimespec(TORTOISEREACTIONSEC, TORTOISEREACTIONNSEC);
-                profile.restTime = RTTimespec(TORTOISERESTTIMESEC, TORTOISERESTTIMENSEC);
+                profile.name = "The Tortoise";
+                profile.filename = "res/images/tortoise.png";
+                profile.speed = 15;
+                profile.stamina = 100;
+                profile.reactionTime = RTTimespec(0, 600000000);
+                profile.restTime = RTTimespec(1, 0);
                 break;
             case HARE:
-                profile.name = HARENAME;
-                profile.filename = HAREASCIIFILENAME;
-                profile.speed = HARESPEED;
-                profile.stamina = HARESTAMINA;
-                profile.reactionTime = RTTimespec(HAREREACTIONSEC, HAREREACTIONNSEC);
-                profile.restTime = RTTimespec(HARERESTTIMESEC, HARERESTTIMENSEC);
+                profile.name = "The Hare";
+                profile.filename = "res/images/hare.png";
+                profile.speed = 20;
+                profile.stamina = 60;
+                profile.reactionTime = RTTimespec(0, 100000000);
+                profile.restTime = RTTimespec(2, 200000000);
                 break;
         }
         return profile;
