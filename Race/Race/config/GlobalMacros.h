@@ -5,6 +5,6 @@
 #define RACERTHREADLIST {L2, L3}
 #define GOAL 100
 #define MAXNUMRACERS 2
-#define FPS 3
+#define FPS 60
 
 #endif
