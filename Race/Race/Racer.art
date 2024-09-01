@@ -1,0 +1,111 @@
+capsule Racer{
+
+    [[rt::header_preface]]
+    `
+        #include <iostream>
+        #include "Animal.h"
+        #include "RacerProfile.art.h"
+        #include "config/GlobalMacros.h"
+    `
+
+    [[rt::decl]]
+    `
+        public:
+            Racer(RTController*, RTActorRef*, RacerProfile);
+        private:
+        RTTimerId _stepTimerId;
+        RTTimespec _stepTime;
+        int _numSteps;
+        int _stamina;
+        int _maxStamina;
+        RTTimespec _reactionTime;
+        RTTimespec _restTime;
+        std::string _name;
+        std::string _asciiFilename;
+    `
+
+    [[rt::impl]]
+    `
+        Racer::Racer(RTController* rtg_rts,RTActorRef* rtg_ref, RacerProfile profile)
+        : RTActor(rtg_rts, rtg_ref)
+        , _numSteps{0}
+        , _maxStamina(profile.stamina)
+        , _stamina(profile.stamina)
+        , _reactionTime(profile.reactionTime)
+        , _restTime(profile.restTime)
+        , _name(profile.name)
+        , _asciiFilename(profile.filename)
+        , _stepTime(profile.speed <= 1 ? RTTimespec(1,0) : RTTimespec(0,1000000000/profile.speed))
+        {}
+    `
+
+    service behavior port mainPort~: MainRacerProtocol;
+    service notify behavior port uiPort~: RacerUIProtocol;
+
+    behavior port stepTimer : Timing;
+    behavior port waitTimer : Timing;
+
+    statemachine{
+        state WaitForConnection;
+        initial->WaitForConnection;
+        connected: WaitForConnection -> Connected.entryPoint on uiPort.rtBound
+        `
+            RaceEntryMessage messageData;
+            messageData.id = getIndex();
+            messageData.name = _name;
+            messageData.filename = _asciiFilename;
+            uiPort.entryMessage(messageData).send();
+        `;
+
+        state Connected{
+            entrypoint entryPoint;
+            reportDistance: on uiPort.distanceRequest
+            `
+                uiPort.distanceResponse(_numSteps).send();
+            `;
+            state WaitForStartSignal, ReactToStartSignal, Running, Resting;
+            entryPoint->WaitForStartSignal;
+            react: WaitForStartSignal->ReactToStartSignal on mainPort.startSignal
+            `
+                waitTimer.informIn(_reactionTime);
+            `;
+            startRunning: ReactToStartSignal->Running on waitTimer.timeout
+            `
+                _stepTimerId = stepTimer.informEvery(_stepTime);
+            `;
+            choice isGoalReached;
+            step: Running->isGoalReached on stepTimer.timeout
+            `
+                _numSteps++;
+                _stamina--;
+            `;
+            goalNotReached: isGoalReached->isTired when `_numSteps < GOAL`;
+            goalReached: isGoalReached->WaitForStartSignal when `else`
+            `
+                mainPort.finishMessage(getIndex()).send();
+                stepTimer.cancelTimer(_stepTimerId);
+            `;
+            choice isTired;
+            keepRunning: isTired->Running when `_stamina > 0`;
+            startResting: isTired->Resting when `else`
+            `
+                stepTimer.cancelTimer(_stepTimerId);
+                waitTimer.informIn(_restTime);
+            `;
+            recovered: Resting->Running on waitTimer.timeout
+            `
+                _stamina = _maxStamina;
+                _stepTimerId = stepTimer.informEvery(_stepTime);
+            `;
+        };
+        disconnected: Connected->End on uiPort.rtUnbound
+        `
+            if(_stepTimerId.isValid())
+            {
+                stepTimer.cancelTimer(_stepTimerId);
+            }
+            context()->abort();
+        `;
+        state End;
+    };
+};

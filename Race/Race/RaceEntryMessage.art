@@ -1,0 +1,10 @@
+[[rt::decl]]
+`
+    #include <string>
+
+    struct[[rt::auto_descriptor]] RaceEntryMessage{
+        int id;
+        std::string name;
+        std::string filename;
+    };
+`

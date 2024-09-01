@@ -1,0 +1,21 @@
+protocol MainRacerProtocol{
+    out startSignal();
+    in finishMessage(`int`);
+};
+
+protocol MainUIProtocol{
+    in readySignal();
+    out startSignal();
+    out finishMessage(`int`);
+};
+
+protocol RacerUIProtocol{
+    [[rt::header_preface]]
+    `
+        #include "RaceEntryMessage.art.h"
+    `
+
+    in entryMessage(`RaceEntryMessage`);
+    out distanceRequest();
+    in distanceResponse(`int`);
+};

@@ -1,0 +1,30 @@
+capsule Main{
+
+    [[rt::header_preface]]
+    `
+        #include "config/GlobalMacros.h"
+    `
+    
+    service behavior port uiPort: MainUIProtocol;
+    service behavior port racersPort: MainRacerProtocol[2];
+
+    statemachine{
+        state WaitForUIReadySignal, Racing, End;
+        initial -> WaitForUIReadySignal;
+        
+        WaitForUIReadySignal->Racing on uiPort.readySignal
+        `
+            uiPort.startSignal().send();
+            
+            for(int i = 0; i < MAXNUMRACERS; i++){
+                racersPort.startSignal().sendAt(i);
+            }
+        `;
+        
+        goalReached: Racing->End on racersPort.finishMessage
+        `
+            const int winnerId = *((int*) rtdata);
+            uiPort.finishMessage(winnerId).send();
+        `;
+    };
+};

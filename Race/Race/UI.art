@@ -1,0 +1,142 @@
+capsule UI{
+
+    [[rt::header_preface]]
+    `
+        #include <string>
+        #include <vector>
+        #include <gui/include/Gui.h>
+        #include "config/GlobalMacros.h"
+    `
+
+    [[rt::decl]]
+    `
+        public:
+            UI(RTController*, RTActorRef*, int);
+        private:
+            int _messageCounter; //used for counting messages
+            RTTimerId _updateTimerId;
+            RTTimespec _updateTime;
+            gui::UI _ui;
+            std::vector<int> _racersXPos;
+            std::vector<std::string> _racerNames;
+            std::vector<int> _racersPortId;
+    `
+
+    [[rt::impl]]
+    `
+        UI::UI(RTController* rtg_rts, RTActorRef* rtg_ref, int numRacers)
+        : RTActor(rtg_rts, rtg_ref)
+        , _racerNames(numRacers,"") //Will be set after connection
+        , _racersXPos(numRacers,0) //All racers start at x=0
+        , _racersPortId(numRacers,-1) //Will be set after connection
+        , _updateTime(FPS<=1 ? RTTimespec(1,0) : RTTimespec(0,1000000000/FPS))
+        , _ui{GOAL}{}
+    `
+
+    behavior port updateTimer : Timing;
+
+    service behavior port mainPort~: MainUIProtocol;
+    service behavior port racersPort: RacerUIProtocol[2];
+
+
+    statemachine{
+        state ConnectingRacers, WaitForStartSignal;
+        choice isAllRacersConnected;
+
+        initial->ConnectingRacers
+        `
+            _messageCounter = 0;
+        `;
+        ConnectingRacers->isAllRacersConnected on racersPort.entryMessage
+        `
+            _messageCounter++;
+
+            RaceEntryMessage messageData = *((RaceEntryMessage*) rtdata);
+            int connectionId = (*getMsg()).sapIndex0();
+
+            _racersPortId.at(connectionId) = messageData.id;
+            _racerNames.at(connectionId) = messageData.name;
+            _ui.addRacer(messageData.id, messageData.filename);
+        `;
+
+        allRacersNotConnected: isAllRacersConnected->ConnectingRacers when
+        `
+            return _messageCounter < _racerNames.size();
+        `;
+        allRacersConnected: isAllRacersConnected->WaitForStartSignal when `else`
+        `
+            _ui.initPrint();
+            mainPort.readySignal().send();
+        `;
+        WaitForStartSignal->Running.entryPoint on mainPort.startSignal
+        `
+            _ui.setText("The race has started!");
+            _updateTimerId = updateTimer.informEvery(_updateTime);
+        `;
+
+        state Running{
+            entrypoint entryPoint;
+            state WaitForUpdate, GetPositions;
+            entryPoint->WaitForUpdate
+            `
+                _ui.update(_racersXPos);
+            `;
+            WaitForUpdate->GetPositions on updateTimer.timeout
+            `
+                for(int i = 0; i < _racerNames.size(); i++){
+                    racersPort.distanceRequest().sendAt(i);
+                }
+                _messageCounter = 0;
+            `;
+            choice isAllPositionsRetrieved;
+            getMessage: GetPositions->isAllPositionsRetrieved on racersPort.distanceResponse
+            `
+                _messageCounter++;
+                const int position = *((int*) rtdata);
+                const int index = (*getMsg()).sapIndex0();
+                _racersXPos.at(_racersPortId.at(index)) = position;
+            `;
+            allPositionsNotRetrieved: isAllPositionsRetrieved->GetPositions when
+            `
+                return _messageCounter < _racerNames.size();
+            `;
+            allPositionsRetrieved: isAllPositionsRetrieved->WaitForUpdate when `else`
+            `
+                _ui.update(_racersXPos);
+            `;
+        };
+        Running->End.entryPoint on mainPort.finishMessage
+        `
+            const int winnerId = *((int*) rtdata);
+            _ui.setText(_racerNames.at(winnerId) + " won!");
+        `;
+        state End{
+            entrypoint entryPoint;
+            state GetPositions, End;
+            choice isAllPositionsRetrieved;
+            entryPoint->GetPositions
+            `
+                for(int i = 0; i < _racerNames.size(); i++){
+                    racersPort.distanceRequest().sendAt(i);
+                }
+                _messageCounter = 0;
+            `;
+            GetPositions->isAllPositionsRetrieved on racersPort.distanceResponse
+            `
+                _messageCounter++;
+                const int position = *((int*) rtdata);
+                const int index = (*getMsg()).sapIndex0();
+                _racersXPos.at(_racersPortId.at(index)) = position;
+            `;
+            allPositionsNotRetrieved: isAllPositionsRetrieved->GetPositions when
+            `
+                return _messageCounter < _racerNames.size();
+            `;
+            allPositionsRetrieved: isAllPositionsRetrieved->End when `else`
+            `
+                _ui.update(_racersXPos);
+                context()->abort();
+            `;
+        };
+    };
+};

@@ -1,0 +1,10 @@
+#ifndef GLOBAL_MACROS_H
+#define GLOBAL_MACROS_H
+
+#define RACERLIST {HARE, TORTOISE}
+#define RACERTHREADLIST {L2, L3}
+#define GOAL 100
+#define MAXNUMRACERS 2
+#define FPS 3
+
+#endif

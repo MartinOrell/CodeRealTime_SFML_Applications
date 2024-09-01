@@ -1,0 +1,42 @@
+[[rt::decl]]
+`
+    #include <iostream>
+    #include "config/RacerProfileMacros.h"
+    #include "Animal.h"
+
+    struct RacerProfile{
+        std::string name;
+        std::string filename;
+        int speed;
+        int stamina;
+        RTTimespec reactionTime;
+        RTTimespec restTime;
+    };
+    RacerProfile getProfile(const Animal animal);
+`
+
+[[rt::impl]]
+`
+    RacerProfile getProfile(const Animal animal){
+        RacerProfile profile;
+        switch(animal){
+            case TORTOISE:
+                profile.name = TORTOISENAME;
+                profile.filename = TORTOISEASCIIFILENAME;
+                profile.speed = TORTOISESPEED;
+                profile.stamina = TORTOISESTAMINA;
+                profile.reactionTime = RTTimespec(TORTOISEREACTIONSEC, TORTOISEREACTIONNSEC);
+                profile.restTime = RTTimespec(TORTOISERESTTIMESEC, TORTOISERESTTIMENSEC);
+                break;
+            case HARE:
+                profile.name = HARENAME;
+                profile.filename = HAREASCIIFILENAME;
+                profile.speed = HARESPEED;
+                profile.stamina = HARESTAMINA;
+                profile.reactionTime = RTTimespec(HAREREACTIONSEC, HAREREACTIONNSEC);
+                profile.restTime = RTTimespec(HARERESTTIMESEC, HARERESTTIMENSEC);
+                break;
+        }
+        return profile;
+    }
+`
