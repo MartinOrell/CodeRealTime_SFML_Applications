@@ -10,11 +10,10 @@ FetchContent_Declare(SFML
     GIT_TAG 2.6.x)
 FetchContent_MakeAvailable(SFML)
 
-set(SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/Gui.cpp")
+set(SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/test.cpp")
 
 add_library(gui STATIC ${SRC_FILES})
 
-target_include_directories(gui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 target_link_libraries(gui PUBLIC sfml-graphics)
 target_compile_features(gui PRIVATE cxx_std_17)
 
