@@ -60,26 +60,27 @@ capsule UI{
         `;
 
         allRacersNotConnected: isAllRacersConnected->ConnectingRacers when
-        `
+        `   
             return _messageCounter < _racerNames.size();
         `;
-        allRacersConnected: isAllRacersConnected->WaitForStartSignal when `else`
+        allRacersConnected: isAllRacersConnected->Running when `else`
         `
             _ui.initPrint();
-            mainPort.readySignal().send();
-        `;
-        WaitForStartSignal->Running.entryPoint on mainPort.startSignal
-        `
-            _ui.setText("The race has started!");
+            _ui.setText("Click anywhere to start race");
             _updateTimerId = updateTimer.informEvery(_updateTime);
         `;
 
         state Running{
-            entrypoint entryPoint;
+            initial->WaitForUpdate;
             state WaitForUpdate, GetPositions;
-            entryPoint->WaitForUpdate
+            WaitForUpdate->WaitForUpdate on mainPort.startSignal
             `
-                _ui.update(_racersXPos);
+                _ui.setText("The race has started!");
+            `;
+            WaitForUpdate->WaitForUpdate on mainPort.finishMessage
+            `
+                const int winnerId = *((int*) rtdata);
+                _ui.setText(_racerNames.at(winnerId) + " won!");
             `;
             WaitForUpdate->GetPositions on updateTimer.timeout
             `
@@ -88,6 +89,7 @@ capsule UI{
                 }
                 _messageCounter = 0;
             `;
+            
             choice isAllPositionsRetrieved;
             getMessage: GetPositions->isAllPositionsRetrieved on racersPort.distanceResponse
             `
@@ -100,42 +102,18 @@ capsule UI{
             `
                 return _messageCounter < _racerNames.size();
             `;
-            allPositionsRetrieved: isAllPositionsRetrieved->WaitForUpdate when `else`
+            update: isAllPositionsRetrieved->WaitForUpdate when `else`
             `
-                _ui.update(_racersXPos);
-            `;
-        };
-        Running->End.entryPoint on mainPort.finishMessage
-        `
-            const int winnerId = *((int*) rtdata);
-            _ui.setText(_racerNames.at(winnerId) + " won!");
-        `;
-        state End{
-            entrypoint entryPoint;
-            state GetPositions, End;
-            choice isAllPositionsRetrieved;
-            entryPoint->GetPositions
-            `
-                for(int i = 0; i < _racerNames.size(); i++){
-                    racersPort.distanceRequest().sendAt(i);
+                gui::Event event = _ui.update(_racersXPos);
+                switch(event)
+                {
+                    case gui::Event::Exit:
+                        context()->abort();
+                        break;
+                    case gui::Event::Click:
+                        mainPort.readySignal().send();
+                        break;
                 }
-                _messageCounter = 0;
-            `;
-            GetPositions->isAllPositionsRetrieved on racersPort.distanceResponse
-            `
-                _messageCounter++;
-                const int position = *((int*) rtdata);
-                const int index = (*getMsg()).sapIndex0();
-                _racersXPos.at(_racersPortId.at(index)) = position;
-            `;
-            allPositionsNotRetrieved: isAllPositionsRetrieved->GetPositions when
-            `
-                return _messageCounter < _racerNames.size();
-            `;
-            allPositionsRetrieved: isAllPositionsRetrieved->End when `else`
-            `
-                _ui.update(_racersXPos);
-                context()->abort();
             `;
         };
     };
