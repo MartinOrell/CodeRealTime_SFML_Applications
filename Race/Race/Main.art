@@ -25,6 +25,11 @@ capsule Main{
         `
             const int winnerId = *((int*) rtdata);
             uiPort.finishMessage(winnerId).send();
+            for(int i = 0; i < MAXNUMRACERS; i++){
+                if(i != (*getMsg()).sapIndex0()){
+                    racersPort.stopSignal().sendAt(i);
+                }
+            }
         `;
     };
 };

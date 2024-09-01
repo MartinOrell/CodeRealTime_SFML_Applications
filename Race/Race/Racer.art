@@ -97,6 +97,19 @@ capsule Racer{
                 _stamina = _maxStamina;
                 _stepTimerId = stepTimer.informEvery(_stepTime);
             `;
+            
+            ReactToStartSignal->WaitForStartSignal on mainPort.stopSignal
+            `
+                stepTimer.cancelTimer(_stepTimerId);
+            `;
+            Running->WaitForStartSignal on mainPort.stopSignal
+            `
+                stepTimer.cancelTimer(_stepTimerId);
+            `;
+            Resting->WaitForStartSignal on mainPort.stopSignal
+            `
+                stepTimer.cancelTimer(_stepTimerId);
+            `;
         };
         disconnected: Connected->End on uiPort.rtUnbound
         `

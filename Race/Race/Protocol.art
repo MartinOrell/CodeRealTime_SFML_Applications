@@ -1,5 +1,6 @@
 protocol MainRacerProtocol{
     out startSignal();
+    out stopSignal();
     in finishMessage(`int`);
 };
 
